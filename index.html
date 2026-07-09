@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>補助金検索 | IWO</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "BIZ UDPGothic", Meiryo, sans-serif;
+    background: #f5f6f8;
+    color: #1a1a1a;
+    line-height: 1.6;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 24px 16px 60px; }
+  header { margin-bottom: 24px; }
+  h1 { font-size: 22px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+  h1 .logo { background: #0f6e56; color: #fff; font-size: 13px; padding: 4px 10px; border-radius: 6px; }
+  .subtitle { font-size: 13px; color: #666; margin-top: 4px; }
+
+  .search-box {
+    background: #fff;
+    border: 1px solid #e2e4e8;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .search-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .search-grid-2 { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; }
+  @media (max-width: 640px) {
+    .search-grid, .search-grid-2 { grid-template-columns: 1fr; }
+  }
+  label { font-size: 12px; color: #555; display: block; margin-bottom: 4px; font-weight: 500; }
+  input[type="text"], select {
+    width: 100%;
+    height: 42px;
+    padding: 0 12px;
+    border: 1px solid #d5d8dd;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #fff;
+    transition: border-color 0.15s;
+  }
+  input[type="text"]:focus, select:focus {
+    outline: none;
+    border-color: #0f6e56;
+    box-shadow: 0 0 0 3px rgba(15,110,86,0.1);
+  }
+  button.primary {
+    height: 42px;
+    padding: 0 28px;
+    background: #0f6e56;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  button.primary:hover { background: #0a5a46; }
+  button.primary:disabled { background: #a5b8b2; cursor: wait; }
+
+  .result-info { font-size: 13px; color: #666; margin-bottom: 12px; }
+
+  .card {
+    background: #fff;
+    border: 1px solid #e2e4e8;
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .card:hover { border-color: #0f6e56; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .card-title { font-size: 15px; font-weight: 600; flex: 1; }
+  .tag {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  .tag-open { background: #e6f4ea; color: #1e7d43; }
+  .tag-soon { background: #e8f0fe; color: #1a56b0; }
+  .tag-closed { background: #fdecea; color: #c5281c; }
+  .card-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 8px; font-size: 12.5px; color: #555; }
+  .card-meta .amount { color: #0f6e56; font-weight: 600; }
+
+  .detail {
+    background: #fff;
+    border: 1px solid #0f6e56;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .detail.open { display: block; }
+  .detail h2 { font-size: 17px; margin-bottom: 12px; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; margin-bottom: 14px; }
+  @media (max-width: 640px) { .detail-grid { grid-template-columns: 1fr; } }
+  .detail-item .dl { font-size: 11px; color: #888; }
+  .detail-item .dv { font-size: 14px; }
+  .detail-item .dv.amount { color: #0f6e56; font-weight: 700; font-size: 16px; }
+  .detail-body { font-size: 13.5px; color: #444; border-top: 1px solid #eee; padding-top: 12px; margin-top: 4px; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+  .back { background: none; border: none; color: #0f6e56; font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 10px; font-weight: 600; }
+  .official-link {
+    display: inline-block;
+    margin-top: 12px;
+    font-size: 13px;
+    color: #0f6e56;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid #0f6e56;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: background 0.15s;
+  }
+  .official-link:hover { background: #e6f4ea; }
+
+  .loading, .empty, .error {
+    text-align: center;
+    padding: 40px 16px;
+    color: #888;
+    font-size: 14px;
+  }
+  .error { color: #c5281c; }
+  .spinner {
+    display: inline-block;
+    width: 24px; height: 24px;
+    border: 3px solid #d5e5df;
+    border-top-color: #0f6e56;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  footer {
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e4e8;
+    font-size: 11px;
+    color: #999;
+    line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1><span class="logo">IWO</span>補助金検索</h1>
+    <p class="subtitle">Jグランツの補助金データベースからリアルタイム検索</p>
+  </header>
+
+  <div class="search-box">
+    <div class="search-grid">
+      <div>
+        <label for="kw">キーワード</label>
+        <input type="text" id="kw" placeholder="例：デジタル化、省エネ、販路開拓" value="デジタル">
+      </div>
+      <div>
+        <label for="area">対象地域</label>
+        <select id="area">
+          <option value="">全国すべて</option>
+          <option value="岡山県" selected>岡山県</option>
+          <option value="広島県">広島県</option>
+          <option value="香川県">香川県</option>
+          <option value="兵庫県">兵庫県</option>
+          <option value="東京都">東京都</option>
+          <option value="大阪府">大阪府</option>
+        </select>
+      </div>
+    </div>
+    <div class="search-grid-2">
+      <div>
+        <label for="accept">公募状況</label>
+        <select id="accept">
+          <option value="1" selected>受付中のみ</option>
+          <option value="0">すべて（終了含む）</option>
+        </select>
+      </div>
+      <div></div>
+      <button class="primary" id="search-btn" onclick="doSearch()">検索する</button>
+    </div>
+  </div>
+
+  <div id="detail" class="detail"></div>
+  <div id="result-info" class="result-info"></div>
+  <div id="results"></div>
+
+  <footer>
+    出典：Jグランツ<br>
+    このコンテンツは、政府公式の補助金申請システム jGrants の Web-API 機能を利用して取得した情報をもとに株式会社IWOにて作成されたものです。コンテンツの内容は日本国政府及び自治体によって保証されたものではありません。
+  </footer>
+</div>
+
+<script>
+const PROXY_URL = "https://pdvzqzpwbuakuljnwxij.supabase.co/functions/v1/dynamic-action";
+
+let currentList = [];
+
+function fmtDate(s) {
+  if (!s) return "—";
+  return s.substring(0, 10).replace(/-/g, "/");
+}
+
+function fmtAmount(n) {
+  if (!n || n === 0) return "—";
+  const num = Number(n);
+  if (num >= 100000000) return (num / 100000000) + "億円";
+  if (num >= 10000) return (num / 10000).toLocaleString() + "万円";
+  return num.toLocaleString() + "円";
+}
+
+function statusTag(item) {
+  const now = new Date();
+  const start = item.acceptance_start_datetime ? new Date(item.acceptance_start_datetime) : null;
+  const end = item.acceptance_end_datetime ? new Date(item.acceptance_end_datetime) : null;
+  if (end && end < now) return '<span class="tag tag-closed">終了</span>';
+  if (start && start > now) return '<span class="tag tag-soon">近日公募</span>';
+  return '<span class="tag tag-open">受付中</span>';
+}
+
+async function doSearch() {
+  const kw = document.getElementById("kw").value.trim() || "補助金";
+  const area = document.getElementById("area").value;
+  const accept = document.getElementById("accept").value;
+  const btn = document.getElementById("search-btn");
+
+  document.getElementById("detail").className = "detail";
+  document.getElementById("results").innerHTML =
+    '<div class="loading"><span class="spinner"></span><br>Jグランツから取得中...</div>';
+  document.getElementById("result-info").textContent = "";
+  btn.disabled = true;
+
+  try {
+    const params = new URLSearchParams({ keyword: kw, acceptance: accept });
+    if (area) params.set("target_area_search", area);
+
+    const res = await fetch(PROXY_URL + "?" + params.toString());
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+
+    currentList = data.result || [];
+    const count = data.metadata?.resultset?.count ?? currentList.length;
+
+    document.getElementById("result-info").textContent =
+      count + "件見つかりました（キーワード：" + kw + (area ? "／地域：" + area : "") + "）";
+
+    if (currentList.length === 0) {
+      document.getElementById("results").innerHTML =
+        '<div class="empty">条件に合う補助金が見つかりませんでした。<br>キーワードを変えてお試しください。</div>';
+      return;
+    }
+
+    document.getElementById("results").innerHTML = currentList.map((item, i) => `
+      <div class="card" onclick="showDetail(${i})">
+        <div class="card-top">
+          <span class="card-title">${item.title || item.name || "（名称不明）"}</span>
+          ${statusTag(item)}
+        </div>
+        <div class="card-meta">
+          <span>📍 ${item.target_area_search || "—"}</span>
+          <span class="amount">💰 上限 ${fmtAmount(item.subsidy_max_limit)}</span>
+          <span>📅 〆切 ${fmtDate(item.acceptance_end_datetime)}</span>
+          <span>👥 ${item.target_number_of_employees || "—"}</span>
+        </div>
+      </div>
+    `).join("");
+
+  } catch (e) {
+    document.getElementById("results").innerHTML =
+      '<div class="error">データ取得に失敗しました（' + e.message + '）<br>時間をおいて再度お試しください。</div>';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function showDetail(i) {
+  const item = currentList[i];
+  const panel = document.getElementById("detail");
+
+  panel.innerHTML = '<div class="loading"><span class="spinner"></span><br>詳細を取得中...</div>';
+  panel.className = "detail open";
+  panel.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  let detail = item;
+  try {
+    const res = await fetch(PROXY_URL + "?id=" + encodeURIComponent(item.id));
+    if (res.ok) {
+      const data = await res.json();
+      if (data.result && data.result[0]) detail = { ...item, ...data.result[0] };
+    }
+  } catch (e) { /* 一覧の情報だけで表示 */ }
+
+  const overview = detail.detail || detail.overview || detail.summary || "";
+  const officialUrl = detail.front_subsidy_detail_page_url ||
+    "https://www.jgrants-portal.go.jp/subsidy/" + encodeURIComponent(item.id);
+
+  panel.innerHTML = `
+    <button class="back" onclick="closeDetail()">← 一覧に戻る</button>
+    <h2>${detail.title || detail.name || "（名称不明）"}</h2>
+    <div class="detail-grid">
+      <div class="detail-item"><div class="dl">対象地域</div><div class="dv">${detail.target_area_search || "—"}</div></div>
+      <div class="detail-item"><div class="dl">従業員数の制約</div><div class="dv">${detail.target_number_of_employees || "—"}</div></div>
+      <div class="detail-item"><div class="dl">補助上限額</div><div class="dv amount">${fmtAmount(detail.subsidy_max_limit)}</div></div>
+      <div class="detail-item"><div class="dl">補助率</div><div class="dv">${detail.subsidy_rate || "—"}</div></div>
+      <div class="detail-item"><div class="dl">受付開始</div><div class="dv">${fmtDate(detail.acceptance_start_datetime)}</div></div>
+      <div class="detail-item"><div class="dl">受付終了</div><div class="dv">${fmtDate(detail.acceptance_end_datetime)}</div></div>
+    </div>
+    ${overview ? '<div class="detail-body">' + overview.replace(/<[^>]*>/g, "").substring(0, 2000) + '</div>' : ''}
+    <a class="official-link" href="${officialUrl}" target="_blank" rel="noopener">Jグランツで詳細を見る →</a>
+  `;
+}
+
+function closeDetail() {
+  document.getElementById("detail").className = "detail";
+}
+
+doSearch();
+</script>
+</body>
+</html>
